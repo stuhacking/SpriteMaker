@@ -3,7 +3,9 @@ Sprite Maker
 
 This is a utility to automate creating sprite clip data from a texture sheet. Select an image which will be displayed in the image tab. Clicking on areas of this image will calculate the sprite coordinates based on the dimensions of a single sprite (configurable), and a grid can be overlayed to help figure out the dimensions. The background color can be changed to something that contrasts will with the sprite graphics. Each click will add the sprite to a list of sprites which are displayed in the Sprites tab.
 
-![Sprite Maker Screenshot](doc/spritemaker_tabs.png "Sprite Maker image and sprite views")
+| ![Sprite Maker Screenshot](doc/spritemaker_tabs.png "Sprite Maker image and sprite views using Oryx Ultimate Fantasy Tileset") | 
+|:--:| 
+| *Sprite Maker image and sprite view example showing [Oryx Ultimate Fantasy Tileset](https://www.oryxdesignlab.com/ultimatefantasy/).* |
 
 After selecting a bunch of sprites and giving them an optional description, the saved document will look like this:
 
