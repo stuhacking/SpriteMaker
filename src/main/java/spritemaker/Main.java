@@ -77,6 +77,10 @@ public class Main {
               imagePanel.setImage(ImageIO.read(img));
             }
 
+            for (Sprite s : doc.getSprites()) {
+              s.icon = imagePanel.getIcon(s.x, s.y, s.width, s.height);
+            }
+
             tblSprites.revalidate();
           } catch (IOException ioe) {
             ioe.printStackTrace();
