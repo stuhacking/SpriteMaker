@@ -19,6 +19,8 @@ public class SpriteDocument {
   public void read (BufferedReader in) throws IOException {
     String line;
 
+    reset();
+
     while ((line = in.readLine()) != null) {
       if (line.isEmpty() || line.startsWith("#")) continue;
 
