@@ -64,6 +64,7 @@ public class Main {
       @Override
       public void actionPerformed (ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
 
         if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
           File f = chooser.getSelectedFile();
@@ -97,6 +98,7 @@ public class Main {
       @Override
       public void actionPerformed (ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
 
         if (chooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
           File f = chooser.getSelectedFile();
@@ -139,6 +141,7 @@ public class Main {
       @Override
       public void actionPerformed (ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         chooser.setFileFilter(
             new FileNameExtensionFilter(null, "jpg", "png", "bmp", "gif"));
 
