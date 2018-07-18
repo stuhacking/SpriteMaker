@@ -1,15 +1,22 @@
 /**
  * Created: 30-Nov-2017
  */
-package spritepack.library;
+package spritepack.ui;
 
+import java.util.ResourceBundle;
 import javax.swing.ImageIcon;
 import javax.swing.table.AbstractTableModel;
+
+import spritepack.library.ImageFile;
+import spritepack.library.ImageLibrary;
 
 /**
  * JTable data model based on ImageFile Document.
  */
 public class LibraryTableModel extends AbstractTableModel {
+
+  private static final ResourceBundle RESOURCES =
+      ResourceBundle.getBundle("spritepack.ui.labels");
 
   private ImageLibrary doc;
 
@@ -49,11 +56,11 @@ public class LibraryTableModel extends AbstractTableModel {
 
     switch (col) {
       case 1:
-        return "Icon";
+        return RESOURCES.getString("tbl.header.icon");
       case 2:
-        return "Name";
+        return RESOURCES.getString("tbl.header.name");
       default:
-        return "id";
+        return RESOURCES.getString("tbl.header.id");
     }
   }
 

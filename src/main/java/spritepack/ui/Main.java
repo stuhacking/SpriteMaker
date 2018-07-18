@@ -11,6 +11,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
+import java.util.ResourceBundle;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -28,13 +29,15 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import spritepack.library.ImageLibrary;
-import spritepack.library.LibraryTableModel;
 
 /**
  * SpriteMaker application frmMainWnd.
  * Created: 29-Nov-2017
  */
 public class Main {
+
+  private static final ResourceBundle RESOURCES =
+      ResourceBundle.getBundle("spritepack.ui.labels");
 
   public static final int DEFAULT_GRID_SIZE = 32;
 
@@ -49,14 +52,15 @@ public class Main {
 
   private static void createMenus () {
     final JFileChooser libraryChooser = new JFileChooser();
+    libraryChooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
     libraryChooser.setCurrentDirectory(null);
     libraryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
     // FILE MENU
-    JMenu mFile = new JMenu("File");
+    JMenu mFile = new JMenu(RESOURCES.getString("menu.file"));
     mFile.setMnemonic('F');
 
-    JMenuItem miOpen = new JMenuItem("Open");
+    JMenuItem miOpen = new JMenuItem(RESOURCES.getString("menu.item.open"));
     miOpen.setMnemonic('O');
 
     miOpen.addActionListener(new ActionListener() {
@@ -72,7 +76,7 @@ public class Main {
       }
     });
 
-    JMenuItem miSave = new JMenuItem("Save");
+    JMenuItem miSave = new JMenuItem(RESOURCES.getString("menu.item.save"));
     miSave.setMnemonic('S');
 
     miSave.addActionListener(new ActionListener() {
@@ -81,7 +85,7 @@ public class Main {
       }
     });
 
-    JMenuItem miQuit = new JMenuItem("Quit");
+    JMenuItem miQuit = new JMenuItem(RESOURCES.getString("menu.item.quit"));
     miQuit.setMnemonic('Q');
 
     miQuit.addActionListener(new ActionListener() {
@@ -98,10 +102,10 @@ public class Main {
 
     // IMAGE MENU
 
-    JMenu mImage = new JMenu("Image");
+    JMenu mImage = new JMenu(RESOURCES.getString("menu.image"));
     mImage.setMnemonic('I');
 
-    JMenuItem miSelect = new JMenuItem("Select Image");
+    JMenuItem miSelect = new JMenuItem(RESOURCES.getString("menu.item.select_image"));
     miSelect.setMnemonic('S');
 
     miSelect.addActionListener(new ActionListener() {
@@ -110,7 +114,7 @@ public class Main {
       }
     });
 
-    JMenuItem miReset = new JMenuItem("Reset");
+    JMenuItem miReset = new JMenuItem(RESOURCES.getString("menu.item.reset"));
     miReset.setMnemonic('R');
 
     miReset.addActionListener(new ActionListener() {
@@ -216,7 +220,7 @@ public class Main {
       @Override
       public void actionPerformed (ActionEvent e) {
         Color newColor = JColorChooser.showDialog(frmMainWnd,
-                                                  "Choose Background",
+                                                  RESOURCES.getString("dlg.title.select_background"),
                                                   pnlCanvasBg.getBgColor());
 
         colorPicker.setBackground(newColor);
@@ -225,14 +229,14 @@ public class Main {
     });
 
     JPanel pnlCanvasCtl = new JPanel();
-    pnlCanvasCtl.add(new JLabel("Background"));
+    pnlCanvasCtl.add(new JLabel(RESOURCES.getString("fld.background")));
     pnlCanvasCtl.add(colorPicker);
-    pnlCanvasCtl.add(new JLabel("Show Grid"));
+    pnlCanvasCtl.add(new JLabel(RESOURCES.getString("fld.show_grid")));
     pnlCanvasCtl.add(chkShowGrid);
-    pnlCanvasCtl.add(new JLabel("Grid Size"));
+    pnlCanvasCtl.add(new JLabel(RESOURCES.getString("fld.grid_size")));
     pnlCanvasCtl.add(fldWidth);
     pnlCanvasCtl.add(fldHeight);
-    pnlCanvasCtl.add(new JLabel("Offset"));
+    pnlCanvasCtl.add(new JLabel(RESOURCES.getString("fld.offset")));
     pnlCanvasCtl.add(fldOX);
     pnlCanvasCtl.add(fldOY);
 
@@ -250,7 +254,7 @@ public class Main {
     fldFilter.setColumns(30);
 
     JPanel pnlLibraryCtl = new JPanel();
-    pnlLibraryCtl.add(new JLabel("Filter: "));
+    pnlLibraryCtl.add(new JLabel(RESOURCES.getString("fld.filter")));
     pnlLibraryCtl.add(fldFilter);
 
     pnlLibrary.add(spLibrary, BorderLayout.CENTER);
@@ -269,7 +273,7 @@ public class Main {
 
 
   public static void main (String[] args) {
-    frmMainWnd = new JFrame("Sprite Pack Editor");
+    frmMainWnd = new JFrame(RESOURCES.getString("dlg.title.main"));
     frmMainWnd.setSize(new Dimension(1280, 800));
     frmMainWnd.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
