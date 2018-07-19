@@ -1,14 +1,18 @@
 package spritepack.ui;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import javax.swing.JPanel;
+
+import spritepack.document.SampleScene;
+import spritepack.document.Sprite;
 
 /**
  * A Panel displaying an image and various selection details.
  * Created: 29-Nov-2017
  */
-public class CanvasBackground extends JPanel implements Runnable {
+public class SampleCanvas extends JPanel implements Runnable {
 
   private static final Color DEFAULT_BACKGROUND  = new Color(50, 50, 65);
   private static final Color DEFAULT_MAIN_GRID   = Color.LIGHT_GRAY.darker().darker();
@@ -16,22 +20,17 @@ public class CanvasBackground extends JPanel implements Runnable {
 
   private Color bgColor = DEFAULT_BACKGROUND;
 
-  private int gridOffsetX = 0, gridOffsetY = 0;
-  private int gridSizeX = 0, gridSizeY = 0;
+  private boolean drawGrid = false;
+  private SampleScene mScene;
 
-  public CanvasBackground () {
+  public SampleCanvas (SampleScene pScene) {
+    mScene = pScene;
+
     setDoubleBuffered(true);
   }
 
-  public void setGridSize (int x, int y, int w, int h) {
-    gridOffsetX = x;
-    gridOffsetY = y;
-    gridSizeX = w;
-    gridSizeY = h;
-  }
-
-  public void resetGrid () {
-    gridSizeX = gridSizeY = 0;
+  public void setDrawGrid (boolean pDrawGrid) {
+    drawGrid = pDrawGrid;
   }
 
   public void setBgColor (Color col) {
@@ -49,7 +48,7 @@ public class CanvasBackground extends JPanel implements Runnable {
     while (true) {
       repaint();
 
-      try { Thread.sleep(250); } catch (InterruptedException e) { e.printStackTrace(); }
+      try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(); }
     }
   }
 
@@ -62,23 +61,31 @@ public class CanvasBackground extends JPanel implements Runnable {
     g.fillRect(0, 0, getWidth(), getHeight());
 
     // Only draw grid if the increments are reasonable.. 8x8 is probably small enough.
-    if (gridSizeX >= 8 && gridSizeY >= 8) {
+    Dimension size = mScene.grid;
+    Dimension sSize = mScene.sGrid;
 
-      int increment = (gridSizeX <= 16 || gridSizeY <= 16) ? 2 : 4;
-      int incrementX = gridSizeX / increment;
-      int incrementY = gridSizeY / increment;
+    if (drawGrid) {
+
+      int incrementX = size.width / sSize.width;
+      int incrementY = size.height / sSize.height;
 
       // Draw Horizontal
-      for (int x = 0, c = 0; x < width; x += incrementX, c = (c + 1) % increment) {
+      for (int x = 0, c = 0; x < width; x += sSize.width, c = (c + 1) % incrementX) {
         g.setColor((c == 0) ? DEFAULT_MAIN_GRID : DEFAULT_SMALL_GRID);
-        g.drawLine(x + gridOffsetX, 0, x + gridOffsetX, height);
+        g.drawLine(x, 0, x, height);
       }
 
       // Draw Vertical
-      for (int y = 0, c = 0; y < height; y += incrementY, c = (c + 1) % increment) {
+      for (int y = 0, c = 0; y < height; y += sSize.height, c = (c + 1) % incrementY) {
         g.setColor((c == 0) ? DEFAULT_MAIN_GRID : DEFAULT_SMALL_GRID);
-        g.drawLine(0, y + gridOffsetY, width, y + gridOffsetY);
+        g.drawLine(0, y, width, y);
       }
+
+    }
+
+    // Draw Sprites
+    for (Sprite s : mScene.getSprites()) {
+      g.drawImage(s.image, s.x, s.y, null);
     }
   }
 }

@@ -8,10 +8,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.ResourceBundle;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -26,8 +28,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.RowFilter;
 import javax.swing.WindowConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
+import spritepack.document.SampleScene;
 import spritepack.library.ImageLibrary;
 
 /**
@@ -39,16 +47,16 @@ public class Main {
   private static final ResourceBundle RESOURCES =
       ResourceBundle.getBundle("spritepack.ui.labels");
 
-  public static final int DEFAULT_GRID_SIZE = 32;
-
   private static JFrame frmMainWnd;
-  private static CanvasBackground pnlCanvasBg;
+  private static SampleCanvas pnlCanvasBg;
   private static JTable tblLibrary;
-  private static JFormattedTextField fldWidth, fldHeight, fldOX, fldOY;
+  private static TableRowSorter<LibraryTableModel> trsLibrarySorter;
+  private static JFormattedTextField fldWidth, fldHeight;
   private static JTextField fldFilter;
 
   // Data
   private static ImageLibrary doc = new ImageLibrary("/home/shacking/dev/art/");
+  private static SampleScene scene = new SampleScene();
 
   private static void createMenus () {
     final JFileChooser libraryChooser = new JFileChooser();
@@ -57,11 +65,11 @@ public class Main {
     libraryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
     // FILE MENU
-    JMenu mFile = new JMenu(RESOURCES.getString("menu.file"));
-    mFile.setMnemonic('F');
+    JMenu mnFile = new JMenu(RESOURCES.getString("menu.file"));
+    mnFile.setMnemonic(KeyEvent.VK_F);
 
     JMenuItem miOpen = new JMenuItem(RESOURCES.getString("menu.item.open"));
-    miOpen.setMnemonic('O');
+    miOpen.setMnemonic(KeyEvent.VK_O);
 
     miOpen.addActionListener(new ActionListener() {
       @Override
@@ -70,6 +78,8 @@ public class Main {
         if (libraryChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
           doc = new ImageLibrary(libraryChooser.getSelectedFile().toString());
           tblLibrary.setModel(new LibraryTableModel(doc));
+          trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
+          tblLibrary.setRowSorter(trsLibrarySorter);
         }
 
         libraryChooser.setCurrentDirectory(libraryChooser.getSelectedFile());
@@ -77,7 +87,7 @@ public class Main {
     });
 
     JMenuItem miSave = new JMenuItem(RESOURCES.getString("menu.item.save"));
-    miSave.setMnemonic('S');
+    miSave.setMnemonic(KeyEvent.VK_S);
 
     miSave.addActionListener(new ActionListener() {
       @Override
@@ -86,7 +96,7 @@ public class Main {
     });
 
     JMenuItem miQuit = new JMenuItem(RESOURCES.getString("menu.item.quit"));
-    miQuit.setMnemonic('Q');
+    miQuit.setMnemonic(KeyEvent.VK_Q);
 
     miQuit.addActionListener(new ActionListener() {
       @Override
@@ -95,40 +105,41 @@ public class Main {
       }
     });
 
-    mFile.add(miOpen);
-    mFile.add(miSave);
-    mFile.addSeparator();
-    mFile.add(miQuit);
+    mnFile.add(miOpen);
+    mnFile.add(miSave);
+    mnFile.addSeparator();
+    mnFile.add(miQuit);
 
-    // IMAGE MENU
+    // EDIT MENU
+    JMenu mnEdit = new JMenu(RESOURCES.getString("menu.edit"));
+    mnEdit.setMnemonic(KeyEvent.VK_E);
 
-    JMenu mImage = new JMenu(RESOURCES.getString("menu.image"));
-    mImage.setMnemonic('I');
+    JMenuItem miUndo = new JMenuItem(RESOURCES.getString("menu.item.undo"));
+    miUndo.setMnemonic(KeyEvent.VK_U);
 
-    JMenuItem miSelect = new JMenuItem(RESOURCES.getString("menu.item.select_image"));
-    miSelect.setMnemonic('S');
-
-    miSelect.addActionListener(new ActionListener() {
+    miUndo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed (ActionEvent e) {
+        scene.undo();
       }
     });
 
     JMenuItem miReset = new JMenuItem(RESOURCES.getString("menu.item.reset"));
-    miReset.setMnemonic('R');
+    miReset.setMnemonic(KeyEvent.VK_R);
 
     miReset.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed (ActionEvent e) {
+        scene.reset();
       }
     });
 
-    mImage.add(miSelect);
-    mImage.add(miReset);
+    mnEdit.add(miUndo);
+    mnEdit.add(miReset);
 
     JMenuBar menuBar = new JMenuBar();
-    menuBar.add(mFile);
-    menuBar.add(mImage);
+    menuBar.add(mnFile);
+    menuBar.add(mnEdit);
 
     frmMainWnd.setJMenuBar(menuBar);
   }
@@ -141,7 +152,7 @@ public class Main {
     // Main View
     // =======================================================================
 
-    pnlCanvasBg = new CanvasBackground();
+    pnlCanvasBg = new SampleCanvas(scene);
     new Thread(pnlCanvasBg).start();
 
     MouseAdapter m = new MouseAdapter() {
@@ -152,6 +163,22 @@ public class Main {
 
       @Override
       public void mouseReleased (MouseEvent e) {
+        TableModel model = tblLibrary.getModel();
+
+        int row = tblLibrary.convertRowIndexToModel(tblLibrary.getSelectedRow());
+
+        if (row >= 0) {
+          ImageIcon icon = (ImageIcon) model.getValueAt(row, 1);
+          String id = (String) model.getValueAt(row, 2).toString();
+
+          int x = e.getX();
+          x -= e.getX() % scene.grid.width;
+
+          int y = e.getY();
+          y -= e.getY() % scene.grid.height;
+
+          scene.addSprite(id, icon.getImage(), x, y);
+        }
       }
 
       @Override
@@ -173,42 +200,90 @@ public class Main {
     // Image Library
     // =======================================================================
 
+    tblLibrary = new JTable(new LibraryTableModel(doc));
+    tblLibrary.setRowHeight(48);
+    tblLibrary.setFillsViewportHeight(false);
 
+    trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
+    tblLibrary.setRowSorter(trsLibrarySorter);
+
+    JScrollPane spLibrary = new JScrollPane(tblLibrary);
+
+    JPanel pnlLibrary = new JPanel();
+    pnlLibrary.setLayout(new BorderLayout());
+
+    fldFilter = new JTextField();
+    fldFilter.setColumns(30);
+
+    fldFilter.getDocument().addDocumentListener(new DocumentListener () {
+      @Override
+      public void insertUpdate (DocumentEvent e) { doChange(e); }
+
+      @Override
+      public void removeUpdate (DocumentEvent e) { doChange(e); }
+
+      @Override
+      public void changedUpdate (DocumentEvent e) { doChange(e); }
+
+      private void doChange (DocumentEvent e) {
+        RowFilter<LibraryTableModel, Object> rf = null;
+
+        //If current expression doesn't parse, don't update.
+        try {
+          rf = RowFilter.regexFilter(fldFilter.getText(), 2);
+        } catch (java.util.regex.PatternSyntaxException se) {
+          return;
+        }
+
+        trsLibrarySorter.setRowFilter(rf);
+      }
+    });
+
+    JPanel pnlLibraryCtl = new JPanel();
+    pnlLibraryCtl.add(new JLabel(RESOURCES.getString("fld.filter")));
+    pnlLibraryCtl.add(fldFilter);
+
+    pnlLibrary.add(spLibrary, BorderLayout.CENTER);
+    pnlLibrary.add(pnlLibraryCtl, BorderLayout.NORTH);
 
     // =======================================================================
     // Controls
     // =======================================================================
 
-    fldOX = new JFormattedTextField(NumberFormat.getInstance());
-    fldOX.setColumns(3);
-    fldOX.setValue(0);
+    DocumentListener gridListener = new DocumentListener() {
+      @Override
+      public void insertUpdate (DocumentEvent e) { doChange(e); }
 
-    fldOY = new JFormattedTextField(NumberFormat.getInstance());
-    fldOY.setColumns(3);
-    fldOY.setValue(0);
+      @Override
+      public void removeUpdate (DocumentEvent e) { doChange(e); }
+
+      @Override
+      public void changedUpdate (DocumentEvent e) { doChange(e); }
+
+      public void doChange (DocumentEvent e) {
+        int width = ((Number) fldWidth.getValue()).intValue();
+        int height = ((Number) fldHeight.getValue()).intValue();
+
+        scene.setGrid(width, height);
+      }
+    };
 
     fldWidth = new JFormattedTextField(NumberFormat.getInstance());
     fldWidth.setColumns(3);
-    fldWidth.setValue(DEFAULT_GRID_SIZE);
+    fldWidth.setValue(scene.grid.width);
+    fldWidth.getDocument().addDocumentListener(gridListener);
 
     fldHeight = new JFormattedTextField(NumberFormat.getInstance());
     fldHeight.setColumns(3);
-    fldHeight.setValue(DEFAULT_GRID_SIZE);
+    fldHeight.setValue(scene.grid.height);
+    fldHeight.getDocument().addDocumentListener(gridListener);
 
     JCheckBox chkShowGrid = new JCheckBox();
     chkShowGrid.setSelected(false);
     chkShowGrid.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged (ItemEvent e) {
-        int width = ((Number) fldWidth.getValue()).intValue();
-        int height = ((Number) fldHeight.getValue()).intValue();
-        int ox = ((Number) fldOX.getValue()).intValue();
-        int oy = ((Number) fldOY.getValue()).intValue();
-
-        if (e.getStateChange() == ItemEvent.DESELECTED)
-          pnlCanvasBg.resetGrid();
-        else
-          pnlCanvasBg.setGridSize(ox, oy, width, height);
+        pnlCanvasBg.setDrawGrid(e.getStateChange() == ItemEvent.SELECTED);
       }
     });
 
@@ -219,9 +294,10 @@ public class Main {
     colorPicker.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed (ActionEvent e) {
-        Color newColor = JColorChooser.showDialog(frmMainWnd,
-                                                  RESOURCES.getString("dlg.title.select_background"),
-                                                  pnlCanvasBg.getBgColor());
+        Color newColor = JColorChooser.showDialog(
+            frmMainWnd,
+            RESOURCES.getString("dlg.title.select_background"),
+            pnlCanvasBg.getBgColor());
 
         colorPicker.setBackground(newColor);
         pnlCanvasBg.setBgColor(newColor);
@@ -236,31 +312,11 @@ public class Main {
     pnlCanvasCtl.add(new JLabel(RESOURCES.getString("fld.grid_size")));
     pnlCanvasCtl.add(fldWidth);
     pnlCanvasCtl.add(fldHeight);
-    pnlCanvasCtl.add(new JLabel(RESOURCES.getString("fld.offset")));
-    pnlCanvasCtl.add(fldOX);
-    pnlCanvasCtl.add(fldOY);
 
+    // =======================================================================
+    // Assemble Main View
+    // =======================================================================
 
-    tblLibrary = new JTable(new LibraryTableModel(doc));
-    tblLibrary.setRowHeight(48);
-    tblLibrary.setFillsViewportHeight(false);
-
-    JScrollPane spLibrary = new JScrollPane(tblLibrary);
-
-    JPanel pnlLibrary = new JPanel();
-    pnlLibrary.setLayout(new BorderLayout());
-
-    fldFilter = new JTextField();
-    fldFilter.setColumns(30);
-
-    JPanel pnlLibraryCtl = new JPanel();
-    pnlLibraryCtl.add(new JLabel(RESOURCES.getString("fld.filter")));
-    pnlLibraryCtl.add(fldFilter);
-
-    pnlLibrary.add(spLibrary, BorderLayout.CENTER);
-    pnlLibrary.add(pnlLibraryCtl, BorderLayout.NORTH);
-
-    // Build Main Tab
     JPanel pnlTab1 = new JPanel();
     pnlTab1.setLayout(new BorderLayout());
 
