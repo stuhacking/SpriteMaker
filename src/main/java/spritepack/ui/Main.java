@@ -4,10 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -71,38 +68,29 @@ public class Main {
     JMenuItem miOpen = new JMenuItem(RESOURCES.getString("menu.item.open"));
     miOpen.setMnemonic(KeyEvent.VK_O);
 
-    miOpen.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed (ActionEvent e) {
-
-        if (libraryChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-          doc = new ImageLibrary(libraryChooser.getSelectedFile().toString());
-          tblLibrary.setModel(new LibraryTableModel(doc));
-          trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
-          tblLibrary.setRowSorter(trsLibrarySorter);
-        }
-
-        libraryChooser.setCurrentDirectory(libraryChooser.getSelectedFile());
+    miOpen.addActionListener(e -> {
+      if (libraryChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+        doc = new ImageLibrary(libraryChooser.getSelectedFile().toString());
+        tblLibrary.setModel(new LibraryTableModel(doc));
+        trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
+        tblLibrary.setRowSorter(trsLibrarySorter);
       }
+
+      libraryChooser.setCurrentDirectory(libraryChooser.getSelectedFile());
     });
 
     JMenuItem miSave = new JMenuItem(RESOURCES.getString("menu.item.save"));
     miSave.setMnemonic(KeyEvent.VK_S);
 
-    miSave.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed (ActionEvent e) {
-      }
+    miSave.addActionListener(e -> {
     });
 
     JMenuItem miQuit = new JMenuItem(RESOURCES.getString("menu.item.quit"));
     miQuit.setMnemonic(KeyEvent.VK_Q);
 
-    miQuit.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed (ActionEvent e) {
-        System.exit(0);
-      }
+    miQuit.addActionListener(e -> {
+      pnlCanvasBg.stop();
+      System.exit(0);
     });
 
     mnFile.add(miOpen);
@@ -117,22 +105,12 @@ public class Main {
     JMenuItem miUndo = new JMenuItem(RESOURCES.getString("menu.item.undo"));
     miUndo.setMnemonic(KeyEvent.VK_U);
 
-    miUndo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed (ActionEvent e) {
-        scene.undo();
-      }
-    });
+    miUndo.addActionListener(e -> scene.undo());
 
     JMenuItem miReset = new JMenuItem(RESOURCES.getString("menu.item.reset"));
     miReset.setMnemonic(KeyEvent.VK_R);
 
-    miReset.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed (ActionEvent e) {
-        scene.reset();
-      }
-    });
+    miReset.addActionListener(e -> scene.reset());
 
     mnEdit.add(miUndo);
     mnEdit.add(miReset);
@@ -153,9 +131,12 @@ public class Main {
     // =======================================================================
 
     pnlCanvasBg = new SampleCanvas(scene);
-    new Thread(pnlCanvasBg).start();
+    pnlCanvasBg.start();
 
     MouseAdapter m = new MouseAdapter() {
+
+      int startX, startY;
+      int endX, endY;
 
       @Override
       public void mouseClicked (MouseEvent e) {
@@ -169,20 +150,29 @@ public class Main {
 
         if (row >= 0) {
           ImageIcon icon = (ImageIcon) model.getValueAt(row, 1);
-          String id = (String) model.getValueAt(row, 2).toString();
+          String id = model.getValueAt(row, 2).toString();
 
-          int x = e.getX();
-          x -= e.getX() % scene.grid.width;
+          int x = e.getX() + scene.grid.width;
+          x -= x % scene.grid.width;
 
-          int y = e.getY();
-          y -= e.getY() % scene.grid.height;
+          int y = e.getY() + scene.grid.height;
+          y -= y % scene.grid.height;
 
-          scene.addSprite(id, icon.getImage(), x, y);
+          for (int xx = startX; xx < x; xx += scene.grid.width) {
+            for (int yy = startY; yy < y; yy += scene.grid.height) {
+              scene.addSprite(id, icon.getImage(), xx, yy);
+            }
+          }
         }
       }
 
       @Override
       public void mousePressed (MouseEvent e) {
+        startX = e.getX();
+        startX -= startX % scene.grid.width;
+
+        startY = e.getY();
+        startY -= startY % scene.grid.height;
       }
 
       @Override
@@ -204,7 +194,8 @@ public class Main {
     tblLibrary.setRowHeight(48);
     tblLibrary.setFillsViewportHeight(false);
 
-    trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
+    trsLibrarySorter =
+        new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
     tblLibrary.setRowSorter(trsLibrarySorter);
 
     JScrollPane spLibrary = new JScrollPane(tblLibrary);
@@ -217,16 +208,16 @@ public class Main {
 
     fldFilter.getDocument().addDocumentListener(new DocumentListener () {
       @Override
-      public void insertUpdate (DocumentEvent e) { doChange(e); }
+      public void insertUpdate (DocumentEvent e) { doChange(); }
 
       @Override
-      public void removeUpdate (DocumentEvent e) { doChange(e); }
+      public void removeUpdate (DocumentEvent e) { doChange(); }
 
       @Override
-      public void changedUpdate (DocumentEvent e) { doChange(e); }
+      public void changedUpdate (DocumentEvent e) { doChange(); }
 
-      private void doChange (DocumentEvent e) {
-        RowFilter<LibraryTableModel, Object> rf = null;
+      private void doChange () {
+        RowFilter<LibraryTableModel, Object> rf;
 
         //If current expression doesn't parse, don't update.
         try {
@@ -252,15 +243,15 @@ public class Main {
 
     DocumentListener gridListener = new DocumentListener() {
       @Override
-      public void insertUpdate (DocumentEvent e) { doChange(e); }
+      public void insertUpdate (DocumentEvent e) { doChange(); }
 
       @Override
-      public void removeUpdate (DocumentEvent e) { doChange(e); }
+      public void removeUpdate (DocumentEvent e) { doChange(); }
 
       @Override
-      public void changedUpdate (DocumentEvent e) { doChange(e); }
+      public void changedUpdate (DocumentEvent e) { doChange(); }
 
-      public void doChange (DocumentEvent e) {
+      private void doChange () {
         int width = ((Number) fldWidth.getValue()).intValue();
         int height = ((Number) fldHeight.getValue()).intValue();
 
@@ -280,28 +271,21 @@ public class Main {
 
     JCheckBox chkShowGrid = new JCheckBox();
     chkShowGrid.setSelected(false);
-    chkShowGrid.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged (ItemEvent e) {
-        pnlCanvasBg.setDrawGrid(e.getStateChange() == ItemEvent.SELECTED);
-      }
-    });
+    chkShowGrid.addItemListener(
+        e -> pnlCanvasBg.setDrawGrid(e.getStateChange() == ItemEvent.SELECTED));
 
     JButton colorPicker = new JButton();
     colorPicker.setBackground(pnlCanvasBg.getBgColor());
     colorPicker.setPreferredSize(new Dimension(20, 20));
 
-    colorPicker.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed (ActionEvent e) {
-        Color newColor = JColorChooser.showDialog(
-            frmMainWnd,
-            RESOURCES.getString("dlg.title.select_background"),
-            pnlCanvasBg.getBgColor());
+    colorPicker.addActionListener(e -> {
+      Color newColor = JColorChooser.showDialog(
+          frmMainWnd,
+          RESOURCES.getString("dlg.title.select_background"),
+          pnlCanvasBg.getBgColor());
 
-        colorPicker.setBackground(newColor);
-        pnlCanvasBg.setBgColor(newColor);
-      }
+      colorPicker.setBackground(newColor);
+      pnlCanvasBg.setBgColor(newColor);
     });
 
     JPanel pnlCanvasCtl = new JPanel();

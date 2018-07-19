@@ -1,6 +1,3 @@
-/**
- * Created: 30-Nov-2017
- */
 package spritepack.library;
 
 import java.io.IOException;
@@ -17,23 +14,16 @@ import java.util.List;
 
 public class ImageLibrary {
 
-  private final String path;
   private final ArrayList<ImageFile> sprites = new ArrayList<>();
 
   public ImageLibrary (String pPath)
   {
-    path = pPath;
-
     ImageFinder finder = new ImageFinder();
     try {
       Files.walkFileTree(Paths.get(pPath), finder);
     } catch (IOException e) {
       System.err.println("Error finding image files in: " + pPath);
     }
-  }
-
-  public String getPath () {
-    return path;
   }
 
   public List<ImageFile> getSprites () { return sprites; }
@@ -49,15 +39,14 @@ public class ImageLibrary {
     void find (Path file) {
       Path name = file.getFileName();
       if (null != name && matcher.matches(name)) {
-        sprites.add(new ImageFile(file.toAbsolutePath(), new ArrayList<>()));
+        sprites.add(new ImageFile(file.toAbsolutePath()));
       }
     }
 
     // Invoke the pattern matching
     // method on each file.
     @Override
-    public FileVisitResult visitFile(Path file,
-                                     BasicFileAttributes attrs) {
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
       find(file);
       return FileVisitResult.CONTINUE;
     }
@@ -65,8 +54,7 @@ public class ImageLibrary {
     // Invoke the pattern matching
     // method on each directory.
     @Override
-    public FileVisitResult preVisitDirectory(Path dir,
-                                             BasicFileAttributes attrs) {
+    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
       find(dir);
       return FileVisitResult.CONTINUE;
     }
@@ -74,7 +62,7 @@ public class ImageLibrary {
     @Override
     public FileVisitResult visitFileFailed(Path file,
                                            IOException exc) {
-      System.err.println(exc);
+      exc.printStackTrace();
       return FileVisitResult.CONTINUE;
     }
   }

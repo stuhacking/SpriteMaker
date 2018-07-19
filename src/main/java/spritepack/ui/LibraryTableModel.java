@@ -20,7 +20,7 @@ public class LibraryTableModel extends AbstractTableModel {
 
   private ImageLibrary doc;
 
-  public LibraryTableModel (ImageLibrary doc) {
+  LibraryTableModel (ImageLibrary doc) {
     this.doc = doc;
   }
 

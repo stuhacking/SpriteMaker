@@ -23,32 +23,47 @@ public class SampleCanvas extends JPanel implements Runnable {
   private boolean drawGrid = false;
   private SampleScene mScene;
 
-  public SampleCanvas (SampleScene pScene) {
+  SampleCanvas (SampleScene pScene) {
     mScene = pScene;
 
     setDoubleBuffered(true);
   }
 
-  public void setDrawGrid (boolean pDrawGrid) {
+  void setDrawGrid (boolean pDrawGrid) {
     drawGrid = pDrawGrid;
   }
 
-  public void setBgColor (Color col) {
+  void setBgColor (Color col) {
     if (null != col) {
       bgColor = col;
     }
   }
 
-  public Color getBgColor () {
+  Color getBgColor () {
     return bgColor;
   }
 
+  private boolean running = false;
+
   @Override
   public void run () {
-    while (true) {
+    while (running) {
       repaint();
 
       try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(); }
+    }
+  }
+
+  void start () {
+    if (!running) {
+      running = true;
+      new Thread(this).start();
+    }
+  }
+
+  void stop () {
+    if (running) {
+      running = false;
     }
   }
 

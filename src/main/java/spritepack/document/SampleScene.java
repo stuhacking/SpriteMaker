@@ -1,6 +1,3 @@
-/**
- * Created: 18-Jul-2018
- */
 package spritepack.document;
 
 import java.awt.Dimension;
@@ -19,9 +16,7 @@ public class SampleScene {
   private List<Sprite> mSprites = new ArrayList<>(256);
 
   public SampleScene () {
-    // Default grid, 32 x 32
     setGrid(32, 32);
-
   }
 
   public void undo () {
