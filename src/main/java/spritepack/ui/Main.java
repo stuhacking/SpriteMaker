@@ -8,8 +8,11 @@ import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.RenderedImage;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ResourceBundle;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -56,10 +59,9 @@ public class Main {
   private static SampleScene scene = new SampleScene();
 
   private static void createMenus () {
-    final JFileChooser libraryChooser = new JFileChooser();
-    libraryChooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
-    libraryChooser.setCurrentDirectory(null);
-    libraryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    final JFileChooser chooser = new JFileChooser();
+    chooser.setCurrentDirectory(null);
+    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
     // FILE MENU
     JMenu mnFile = new JMenu(RESOURCES.getString("menu.file"));
@@ -69,20 +71,45 @@ public class Main {
     miOpen.setMnemonic(KeyEvent.VK_O);
 
     miOpen.addActionListener(e -> {
-      if (libraryChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-        doc = new ImageLibrary(libraryChooser.getSelectedFile().toString());
+      chooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
+
+      if (chooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+        doc = new ImageLibrary(chooser.getSelectedFile().toString());
         tblLibrary.setModel(new LibraryTableModel(doc));
         trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
         tblLibrary.setRowSorter(trsLibrarySorter);
       }
 
-      libraryChooser.setCurrentDirectory(libraryChooser.getSelectedFile());
+      chooser.setCurrentDirectory(chooser.getSelectedFile());
     });
 
     JMenuItem miSave = new JMenuItem(RESOURCES.getString("menu.item.save"));
     miSave.setMnemonic(KeyEvent.VK_S);
 
     miSave.addActionListener(e -> {
+      chooser.setDialogTitle(RESOURCES.getString("dlg.title.save"));
+
+      if (chooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+        // TODO [smh] Save sample scene
+        System.out.println("Save scene...");
+      }
+    });
+
+    JMenuItem miExport = new JMenuItem(RESOURCES.getString("menu.item.export"));
+    miExport.setMnemonic(KeyEvent.VK_E);
+
+    miExport.addActionListener(e -> {
+      chooser.setDialogTitle(RESOURCES.getString("dlg.title.export"));
+
+      if (chooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+        RenderedImage texture = scene.export();
+
+        try {
+          ImageIO.write(texture, "png", chooser.getSelectedFile());
+        } catch (IOException ioe) {
+          ioe.printStackTrace();
+        }
+      }
     });
 
     JMenuItem miQuit = new JMenuItem(RESOURCES.getString("menu.item.quit"));
@@ -95,6 +122,8 @@ public class Main {
 
     mnFile.add(miOpen);
     mnFile.add(miSave);
+    mnFile.addSeparator();
+    mnFile.add(miExport);
     mnFile.addSeparator();
     mnFile.add(miQuit);
 
@@ -270,7 +299,7 @@ public class Main {
     fldHeight.getDocument().addDocumentListener(gridListener);
 
     JCheckBox chkShowGrid = new JCheckBox();
-    chkShowGrid.setSelected(false);
+    chkShowGrid.setSelected(true);
     chkShowGrid.addItemListener(
         e -> pnlCanvasBg.setDrawGrid(e.getStateChange() == ItemEvent.SELECTED));
 

@@ -20,7 +20,7 @@ public class SampleCanvas extends JPanel implements Runnable {
 
   private Color bgColor = DEFAULT_BACKGROUND;
 
-  private boolean drawGrid = false;
+  private boolean drawGrid = true;
   private SampleScene mScene;
 
   SampleCanvas (SampleScene pScene) {
