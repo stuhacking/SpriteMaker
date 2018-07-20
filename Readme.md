@@ -17,4 +17,6 @@ of 2 dimensions.
 After selecting a bunch of sprites and giving them an optional description, the saved document will look like this:
 
 | ![Result texture](doc/oryx_sample.png "Resulting sprite sheet") |
+|:--:|
+| Sample scene sprites packed into sprite sheet |
 
