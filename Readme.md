@@ -10,7 +10,7 @@ size specified along the bottom.)
 Exporting an image will pack unique sprites into a texture sheet with power
 of 2 dimensions.
 
-| ![Sprite Editor Screenshot](doc/spriteeditor.png "Sprite Maker image and sprite views using Oryx Ultimate Fantasy Tileset") |
+| ![Sprite Editor Screenshot](doc/sprite_editor.png "Sprite Maker image and sprite views using Oryx Ultimate Fantasy Tileset") |
 |:--:|
 | *Sprite Maker image and sprite view example showing [Oryx Ultimate Fantasy Tileset](https://www.oryxdesignlab.com/ultimatefantasy/).* |
 
