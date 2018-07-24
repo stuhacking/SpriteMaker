@@ -33,7 +33,7 @@ public class ImageLibrary {
   }
 
   private class ImageFinder extends SimpleFileVisitor<Path> {
-    private PathMatcher matcher =
+    private final PathMatcher matcher =
         FileSystems.getDefault().getPathMatcher("glob:*.png");
 
     void find (Path file) {

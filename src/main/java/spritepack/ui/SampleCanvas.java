@@ -13,7 +13,7 @@ import spritepack.document.Sprite;
  * A Panel displaying an image and various selection details.
  * Created: 29-Nov-2017
  */
-public class SampleCanvas extends JPanel implements Runnable {
+class SampleCanvas extends JPanel implements Runnable {
 
   private static final Color DEFAULT_BACKGROUND  = new Color(50, 50, 65);
   private static final Color DEFAULT_MAIN_GRID   = new Color(110, 110, 110);

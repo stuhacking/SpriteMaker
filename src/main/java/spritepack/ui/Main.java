@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -32,11 +33,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
 import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import spritepack.document.SampleScene;
@@ -48,11 +49,13 @@ import spritepack.library.ImageLibrary;
  * SpriteMaker application frmMainWnd.
  * Created: 29-Nov-2017
  */
-public class Main {
+class Main {
 
+  // Display strings.
   private static final ResourceBundle RESOURCES =
       ResourceBundle.getBundle("spritepack.ui.labels");
 
+  // UI Controls used by listeners.
   private static JFrame frmMainWnd;
   private static SampleCanvas pnlCanvasBg;
   private static JTable tblLibrary;
@@ -62,159 +65,204 @@ public class Main {
 
   private static JTextField fldFilter;
 
-  // Data
+  // Data models.
   private static ImageLibrary library = new ImageLibrary("/home/shacking/dev/art/");
   private static SampleScene scene = new SampleScene();
 
+  /**
+   * Populate Menu actions.
+   */
   private static void createMenus () {
     final JFileChooser chooser = new JFileChooser();
     chooser.setCurrentDirectory(null);
     chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-    // FILE MENU
+    JMenuBar menuBar = new JMenuBar();
+
     JMenu mnFile = new JMenu(RESOURCES.getString("menu.file"));
     mnFile.setMnemonic(KeyEvent.VK_F);
 
-    JMenuItem miLoad = new JMenuItem(RESOURCES.getString("menu.item.load_library"));
-    miLoad.setMnemonic(KeyEvent.VK_L);
-
-    miLoad.addActionListener(e -> {
-      chooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
-
-      if (chooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-        library = new ImageLibrary(chooser.getSelectedFile().toString());
-        tblLibrary.setModel(new LibraryTableModel(library));
-        trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
-        tblLibrary.setRowSorter(trsLibrarySorter);
-      }
-
-      chooser.setCurrentDirectory(chooser.getSelectedFile());
-    });
-
-    JMenuItem miOpen = new JMenuItem(RESOURCES.getString("menu.item.open"));
-    miOpen.setMnemonic(KeyEvent.VK_O);
-
-    miOpen.addActionListener(e -> {
-      JFileChooser sceneChooser = new JFileChooser();
-      sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-      sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.open_scene"));
-
-      if (sceneChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-        try (BufferedReader in = new BufferedReader(new FileReader(sceneChooser.getSelectedFile()))){
-
-          scene.reset();
-
-          String line = in.readLine();
-          while (null != line) {
-            String[] tokens = line.split(":");
-
-            if ("g".equals(tokens[0]) && tokens.length == 3) { // Grid dimensions
-              scene.setGrid(Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
-
-              fldWidth.getDocument().removeDocumentListener(dlGridChange);
-              fldHeight.getDocument().removeDocumentListener(dlGridChange);
-              fldWidth.setValue(scene.grid.width);
-              fldHeight.setValue(scene.grid.height);
-              fldWidth.getDocument().addDocumentListener(dlGridChange);
-              fldHeight.getDocument().addDocumentListener(dlGridChange);
-            }
-
-            if ("s".equals(tokens[0]) && tokens.length == 4) { // Sprite
-              scene.addSprite(tokens[1],
-                              Integer.parseInt(tokens[2]),
-                              Integer.parseInt(tokens[3]));
-            }
-
-            line = in.readLine();
-          }
-
-        } catch (IOException ioe) {
-          ioe.printStackTrace();
-        }
-      }
-
-    });
-
-    JMenuItem miSave = new JMenuItem(RESOURCES.getString("menu.item.save"));
-    miSave.setMnemonic(KeyEvent.VK_S);
-
-    miSave.addActionListener(e -> {
-      JFileChooser sceneChooser = new JFileChooser();
-      sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-      sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.save"));
-
-      if (sceneChooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(sceneChooser.getSelectedFile()))){
-
-          out.write(String.format("g:%d:%d\n", scene.grid.width, scene.grid.height));
-          for (Sprite s : scene.getSprites()) {
-            out.write(String.format("s:%s:%d:%d\n", s.id, s.x, s.y));
-          }
-
-        } catch (IOException ioe) {
-          ioe.printStackTrace();
-        }
-      }
-    });
-
-    JMenuItem miExport = new JMenuItem(RESOURCES.getString("menu.item.export"));
-    miExport.setMnemonic(KeyEvent.VK_E);
-
-    miExport.addActionListener(e -> {
-      chooser.setDialogTitle(RESOURCES.getString("dlg.title.export"));
-
-      if (chooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-        RenderedImage texture = scene.export();
-
-        try {
-          ImageIO.write(texture, "png", chooser.getSelectedFile());
-        } catch (IOException ioe) {
-          ioe.printStackTrace();
-        }
-      }
-    });
-
-    JMenuItem miQuit = new JMenuItem(RESOURCES.getString("menu.item.quit"));
-    miQuit.setMnemonic(KeyEvent.VK_Q);
-
-    miQuit.addActionListener(e -> {
-      pnlCanvasBg.stop();
-      System.exit(0);
-    });
-
-    mnFile.add(miOpen);
-    mnFile.add(miSave);
-    mnFile.addSeparator();
-    mnFile.add(miLoad);
-    mnFile.add(miExport);
-    mnFile.addSeparator();
-    mnFile.add(miQuit);
-
-    // EDIT MENU
     JMenu mnEdit = new JMenu(RESOURCES.getString("menu.edit"));
     mnEdit.setMnemonic(KeyEvent.VK_E);
 
-    JMenuItem miUndo = new JMenuItem(RESOURCES.getString("menu.item.undo"));
-    miUndo.setMnemonic(KeyEvent.VK_U);
-
-    miUndo.addActionListener(e -> scene.undo());
-
-    JMenuItem miReset = new JMenuItem(RESOURCES.getString("menu.item.reset"));
-    miReset.setMnemonic(KeyEvent.VK_R);
-
-    miReset.addActionListener(e -> scene.reset());
-
-    mnEdit.add(miUndo);
-    mnEdit.add(miReset);
-
-    JMenuBar menuBar = new JMenuBar();
     menuBar.add(mnFile);
     menuBar.add(mnEdit);
+
+    // =======================================================================
+    // File Menu
+    // =======================================================================
+
+    // File -> Open
+    {
+      JMenuItem item = new JMenuItem(RESOURCES.getString("menu.item.open"));
+      item.setMnemonic(KeyEvent.VK_O);
+      item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+
+      item.addActionListener(e -> {
+        JFileChooser sceneChooser = new JFileChooser();
+        sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.open_scene"));
+
+        if (sceneChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+          try (BufferedReader in = new BufferedReader(new FileReader(sceneChooser.getSelectedFile()))) {
+
+            scene.reset();
+
+            String line = in.readLine();
+            while (null != line) {
+              String[] tokens = line.split(":");
+
+              if ("g".equals(tokens[0]) && tokens.length == 3) { // Grid dimensions
+                scene.setGrid(Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
+
+                fldWidth.getDocument().removeDocumentListener(dlGridChange);
+                fldHeight.getDocument().removeDocumentListener(dlGridChange);
+                fldWidth.setValue(scene.grid.width);
+                fldHeight.setValue(scene.grid.height);
+                fldWidth.getDocument().addDocumentListener(dlGridChange);
+                fldHeight.getDocument().addDocumentListener(dlGridChange);
+              }
+
+              if ("s".equals(tokens[0]) && tokens.length == 4) { // Sprite
+                scene.addSprite(tokens[1],
+                                Integer.parseInt(tokens[2]),
+                                Integer.parseInt(tokens[3]));
+              }
+
+              line = in.readLine();
+            }
+
+          } catch (IOException ioe) {
+            ioe.printStackTrace();
+          }
+        }
+
+      });
+
+      mnFile.add(item);
+    }
+
+    // File -> Save
+    {
+      JMenuItem item = new JMenuItem(RESOURCES.getString("menu.item.save"));
+      item.setMnemonic(KeyEvent.VK_S);
+      item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+
+      item.addActionListener(e -> {
+        JFileChooser sceneChooser = new JFileChooser();
+        sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.save"));
+
+        if (sceneChooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+
+          try (BufferedWriter out = new BufferedWriter(new FileWriter(sceneChooser.getSelectedFile()))) {
+
+            out.write(String.format("g:%d:%d\n", scene.grid.width, scene.grid.height));
+            for (Sprite s : scene.getSprites()) {
+              out.write(String.format("s:%s:%d:%d\n", s.id, s.x, s.y));
+            }
+
+          } catch (IOException ioe) {
+            ioe.printStackTrace();
+          }
+        }
+      });
+
+      mnFile.add(item);
+    }
+
+    mnFile.addSeparator();
+
+    // File -> Load Library
+    {
+      JMenuItem item = new JMenuItem(RESOURCES.getString("menu.item.load_library"));
+      item.setMnemonic(KeyEvent.VK_L);
+
+      item.addActionListener(e -> {
+        chooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
+
+        if (chooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+          library = new ImageLibrary(chooser.getSelectedFile().toString());
+          tblLibrary.setModel(new LibraryTableModel(library));
+          trsLibrarySorter = new TableRowSorter<>((LibraryTableModel) tblLibrary.getModel());
+          tblLibrary.setRowSorter(trsLibrarySorter);
+        }
+
+        chooser.setCurrentDirectory(chooser.getSelectedFile());
+      });
+
+      mnFile.add(item);
+    }
+
+    // File -> Export Texture
+    {
+      JMenuItem item = new JMenuItem(RESOURCES.getString("menu.item.export"));
+      item.setMnemonic(KeyEvent.VK_E);
+
+      item.addActionListener(e -> {
+        chooser.setDialogTitle(RESOURCES.getString("dlg.title.export"));
+
+        if (chooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+          RenderedImage texture = scene.export();
+
+          try {
+            ImageIO.write(texture, "png", chooser.getSelectedFile());
+          } catch (IOException ioe) {
+            ioe.printStackTrace();
+          }
+        }
+      });
+
+      mnFile.add(item);
+    }
+
+    mnFile.addSeparator();
+
+    // File -> Quit
+    {
+      JMenuItem item = new JMenuItem(RESOURCES.getString("menu.item.quit"));
+      item.setMnemonic(KeyEvent.VK_Q);
+      item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+
+      item.addActionListener(e -> {
+        pnlCanvasBg.stop();
+        System.exit(0);
+      });
+
+      mnFile.add(item);
+    }
+
+    // =======================================================================
+    // Edit Menu
+    // =======================================================================
+
+    // Edit -> Undo
+    {
+      JMenuItem item = new JMenuItem(RESOURCES.getString("menu.item.undo"));
+      item.setMnemonic(KeyEvent.VK_U);
+
+      item.addActionListener(e -> scene.undo());
+
+      mnEdit.add(item);
+    }
+
+    // Edit -> reset
+    {
+      JMenuItem item = new JMenuItem(RESOURCES.getString("menu.item.reset"));
+      item.setMnemonic(KeyEvent.VK_R);
+
+      item.addActionListener(e -> scene.reset());
+
+      mnEdit.add(item);
+    }
+
 
     frmMainWnd.setJMenuBar(menuBar);
   }
 
+  /**
+   * Populate Frame content area.
+   */
   private static void createContent () {
     Container contentPane = frmMainWnd.getContentPane();
     contentPane.setLayout(new BorderLayout());
@@ -229,7 +277,6 @@ public class Main {
     MouseAdapter m = new MouseAdapter() {
 
       int startX, startY;
-      int endX, endY;
 
       @Override
       public void mouseClicked (MouseEvent e) {
@@ -237,8 +284,6 @@ public class Main {
 
       @Override
       public void mouseReleased (MouseEvent e) {
-        TableModel model = tblLibrary.getModel();
-
         int row = tblLibrary.convertRowIndexToModel(tblLibrary.getSelectedRow());
         ImageFile sprite = library.getSprite(row);
 

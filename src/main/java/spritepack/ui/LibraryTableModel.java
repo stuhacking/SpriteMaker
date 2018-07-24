@@ -1,6 +1,3 @@
-/**
- * Created: 30-Nov-2017
- */
 package spritepack.ui;
 
 import java.util.ResourceBundle;
@@ -13,12 +10,12 @@ import spritepack.library.ImageLibrary;
 /**
  * JTable data model based on ImageFile Document.
  */
-public class LibraryTableModel extends AbstractTableModel {
+class LibraryTableModel extends AbstractTableModel {
 
   private static final ResourceBundle RESOURCES =
       ResourceBundle.getBundle("spritepack.ui.labels");
 
-  private ImageLibrary doc;
+  private final ImageLibrary doc;
 
   LibraryTableModel (ImageLibrary doc) {
     this.doc = doc;

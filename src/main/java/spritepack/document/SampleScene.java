@@ -5,14 +5,12 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
-public class SampleScene implements Serializable {
-  private static final long serialVersionUid = 57L;
+public class SampleScene {
 
   /** Major grid size. */
   public Dimension grid;
@@ -20,7 +18,7 @@ public class SampleScene implements Serializable {
   /** Small grid size. */
   public Dimension sGrid;
 
-  private List<Sprite> mSprites = new ArrayList<>(256);
+  private final List<Sprite> mSprites = new ArrayList<>(256);
 
   public SampleScene () {
     setGrid(32, 32);
@@ -57,12 +55,7 @@ public class SampleScene implements Serializable {
 
   public RenderedImage export () {
     List<Sprite> uniqueSprites = new ArrayList<>(new HashSet<>(mSprites));
-    uniqueSprites.sort(new Comparator<Sprite>() {
-      @Override
-      public int compare (Sprite o1, Sprite o2) {
-        return o1.id.compareTo(o2.id);
-      }
-    });
+    uniqueSprites.sort(Comparator.comparing(pO -> pO.id));
 
     int sq = (int)Math.ceil(Math.sqrt(uniqueSprites.size()));
 

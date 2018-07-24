@@ -1,5 +1,5 @@
-Sprite Maker
-============
+Sprite Editor
+=============
 
 This is a utility to automate building a texture atlas (sprite sheet) from a
 sample scene. Opening a directory containing images will display the individual
@@ -14,7 +14,7 @@ of 2 dimensions.
 |:--:|
 | *Sprite Maker image and sprite view example showing [Oryx Ultimate Fantasy Tileset](https://www.oryxdesignlab.com/ultimatefantasy/).* |
 
-After selecting a bunch of sprites and giving them an optional description, the saved document will look like this:
+After selecting a bunch of sprites the exported texture will look like this:
 
 | ![Result texture](doc/oryx_sample.png "Resulting sprite sheet") |
 |:--:|

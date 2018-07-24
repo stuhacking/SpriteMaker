@@ -1,18 +1,16 @@
-/**
- * Created: 18-Jul-2018
- */
 package spritepack.document;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Objects;
 import javax.imageio.ImageIO;
 
-public class Sprite implements Serializable {
-  private static final long serialVersionUid = 71L;
+/**
+ * Sample Scene sprite.
+ */
+public class Sprite {
 
   public final String id;
   public final Image image;
@@ -53,8 +51,6 @@ public class Sprite implements Serializable {
 
   @Override
   public int hashCode () {
-
     return Objects.hash(id);
   }
-
 }

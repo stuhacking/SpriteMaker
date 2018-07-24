@@ -20,7 +20,7 @@ public class ImageFile {
    *
    * @param pFilename Image filename
    */
-  public ImageFile (Path pFilename) {
+  ImageFile (Path pFilename) {
     filename = pFilename.toAbsolutePath();
     icon = new ImageIcon(filename.toString());
   }
