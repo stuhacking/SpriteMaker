@@ -9,6 +9,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.RenderedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ResourceBundle;
@@ -36,6 +40,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import spritepack.document.SampleScene;
+import spritepack.document.Sprite;
 import spritepack.library.ImageFile;
 import spritepack.library.ImageLibrary;
 
@@ -53,6 +58,8 @@ public class Main {
   private static JTable tblLibrary;
   private static TableRowSorter<LibraryTableModel> trsLibrarySorter;
   private static JFormattedTextField fldWidth, fldHeight;
+  private static DocumentListener dlGridChange;
+
   private static JTextField fldFilter;
 
   // Data
@@ -68,10 +75,10 @@ public class Main {
     JMenu mnFile = new JMenu(RESOURCES.getString("menu.file"));
     mnFile.setMnemonic(KeyEvent.VK_F);
 
-    JMenuItem miOpen = new JMenuItem(RESOURCES.getString("menu.item.open"));
-    miOpen.setMnemonic(KeyEvent.VK_O);
+    JMenuItem miLoad = new JMenuItem(RESOURCES.getString("menu.item.load_library"));
+    miLoad.setMnemonic(KeyEvent.VK_L);
 
-    miOpen.addActionListener(e -> {
+    miLoad.addActionListener(e -> {
       chooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
 
       if (chooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
@@ -84,15 +91,70 @@ public class Main {
       chooser.setCurrentDirectory(chooser.getSelectedFile());
     });
 
+    JMenuItem miOpen = new JMenuItem(RESOURCES.getString("menu.item.open"));
+    miOpen.setMnemonic(KeyEvent.VK_O);
+
+    miOpen.addActionListener(e -> {
+      JFileChooser sceneChooser = new JFileChooser();
+      sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+      sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.open_scene"));
+
+      if (sceneChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+        try (BufferedReader in = new BufferedReader(new FileReader(sceneChooser.getSelectedFile()))){
+
+          scene.reset();
+
+          String line = in.readLine();
+          while (null != line) {
+            String[] tokens = line.split(":");
+
+            if ("g".equals(tokens[0]) && tokens.length == 3) { // Grid dimensions
+              scene.setGrid(Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
+
+              fldWidth.getDocument().removeDocumentListener(dlGridChange);
+              fldHeight.getDocument().removeDocumentListener(dlGridChange);
+              fldWidth.setValue(scene.grid.width);
+              fldHeight.setValue(scene.grid.height);
+              fldWidth.getDocument().addDocumentListener(dlGridChange);
+              fldHeight.getDocument().addDocumentListener(dlGridChange);
+            }
+
+            if ("s".equals(tokens[0]) && tokens.length == 4) { // Sprite
+              scene.addSprite(tokens[1],
+                              Integer.parseInt(tokens[2]),
+                              Integer.parseInt(tokens[3]));
+            }
+
+            line = in.readLine();
+          }
+
+        } catch (IOException ioe) {
+          ioe.printStackTrace();
+        }
+      }
+
+    });
+
     JMenuItem miSave = new JMenuItem(RESOURCES.getString("menu.item.save"));
     miSave.setMnemonic(KeyEvent.VK_S);
 
     miSave.addActionListener(e -> {
-      chooser.setDialogTitle(RESOURCES.getString("dlg.title.save"));
+      JFileChooser sceneChooser = new JFileChooser();
+      sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+      sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.save"));
 
-      if (chooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-        // TODO [smh] Save sample scene
-        System.out.println("Save scene...");
+      if (sceneChooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(sceneChooser.getSelectedFile()))){
+
+          out.write(String.format("g:%d:%d\n", scene.grid.width, scene.grid.height));
+          for (Sprite s : scene.getSprites()) {
+            out.write(String.format("s:%s:%d:%d\n", s.id, s.x, s.y));
+          }
+
+        } catch (IOException ioe) {
+          ioe.printStackTrace();
+        }
       }
     });
 
@@ -124,6 +186,7 @@ public class Main {
     mnFile.add(miOpen);
     mnFile.add(miSave);
     mnFile.addSeparator();
+    mnFile.add(miLoad);
     mnFile.add(miExport);
     mnFile.addSeparator();
     mnFile.add(miQuit);
@@ -272,7 +335,7 @@ public class Main {
     // Controls
     // =======================================================================
 
-    DocumentListener gridListener = new DocumentListener() {
+    dlGridChange = new DocumentListener() {
       @Override
       public void insertUpdate (DocumentEvent e) { doChange(); }
 
@@ -293,12 +356,12 @@ public class Main {
     fldWidth = new JFormattedTextField(NumberFormat.getInstance());
     fldWidth.setColumns(3);
     fldWidth.setValue(scene.grid.width);
-    fldWidth.getDocument().addDocumentListener(gridListener);
+    fldWidth.getDocument().addDocumentListener(dlGridChange);
 
     fldHeight = new JFormattedTextField(NumberFormat.getInstance());
     fldHeight.setColumns(3);
     fldHeight.setValue(scene.grid.height);
-    fldHeight.getDocument().addDocumentListener(gridListener);
+    fldHeight.getDocument().addDocumentListener(dlGridChange);
 
     JCheckBox chkShowGrid = new JCheckBox();
     chkShowGrid.setSelected(true);

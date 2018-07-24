@@ -7,10 +7,13 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Objects;
 import javax.imageio.ImageIO;
 
-public class Sprite {
+public class Sprite implements Serializable {
+  private static final long serialVersionUid = 71L;
+
   public final String id;
   public final Image image;
   public final int x;

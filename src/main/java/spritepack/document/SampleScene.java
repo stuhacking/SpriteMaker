@@ -5,12 +5,14 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
-public class SampleScene {
+public class SampleScene implements Serializable {
+  private static final long serialVersionUid = 57L;
 
   /** Major grid size. */
   public Dimension grid;
@@ -43,6 +45,10 @@ public class SampleScene {
 
   public List<Sprite> getSprites () {
     return mSprites;
+  }
+
+  public void addSprite (String id, int x, int y) {
+    mSprites.add(new Sprite(id, x, y));
   }
 
   public void addSprite (String id, Image icon, int x, int y) {
