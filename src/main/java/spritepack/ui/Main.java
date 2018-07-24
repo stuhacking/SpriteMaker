@@ -36,6 +36,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import spritepack.document.SampleScene;
+import spritepack.library.ImageFile;
 import spritepack.library.ImageLibrary;
 
 /**
@@ -55,7 +56,7 @@ public class Main {
   private static JTextField fldFilter;
 
   // Data
-  private static ImageLibrary doc = new ImageLibrary("/home/shacking/dev/art/");
+  private static ImageLibrary library = new ImageLibrary("/home/shacking/dev/art/");
   private static SampleScene scene = new SampleScene();
 
   private static void createMenus () {
@@ -74,8 +75,8 @@ public class Main {
       chooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
 
       if (chooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-        doc = new ImageLibrary(chooser.getSelectedFile().toString());
-        tblLibrary.setModel(new LibraryTableModel(doc));
+        library = new ImageLibrary(chooser.getSelectedFile().toString());
+        tblLibrary.setModel(new LibraryTableModel(library));
         trsLibrarySorter = new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
         tblLibrary.setRowSorter(trsLibrarySorter);
       }
@@ -176,10 +177,11 @@ public class Main {
         TableModel model = tblLibrary.getModel();
 
         int row = tblLibrary.convertRowIndexToModel(tblLibrary.getSelectedRow());
+        ImageFile sprite = library.getSprite(row);
 
         if (row >= 0) {
-          ImageIcon icon = (ImageIcon) model.getValueAt(row, 1);
-          String id = model.getValueAt(row, 2).toString();
+          ImageIcon icon = sprite.icon;
+          String id = sprite.filename.toString();
 
           int x = e.getX() + scene.grid.width;
           x -= x % scene.grid.width;
@@ -219,7 +221,7 @@ public class Main {
     // Image Library
     // =======================================================================
 
-    tblLibrary = new JTable(new LibraryTableModel(doc));
+    tblLibrary = new JTable(new LibraryTableModel(library));
     tblLibrary.setRowHeight(48);
     tblLibrary.setFillsViewportHeight(false);
 
