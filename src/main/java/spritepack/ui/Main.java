@@ -12,11 +12,14 @@ import java.awt.event.MouseEvent;
 import java.awt.image.RenderedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -41,7 +44,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.TableRowSorter;
 
 import spritepack.document.SampleScene;
-import spritepack.document.Sprite;
 import spritepack.library.ImageFile;
 import spritepack.library.ImageLibrary;
 
@@ -50,6 +52,7 @@ import spritepack.library.ImageLibrary;
  * Created: 29-Nov-2017
  */
 class Main {
+  private static final Logger logger = Logger.getLogger("SpriteEditor");
 
   // Display strings.
   private static final ResourceBundle RESOURCES =
@@ -75,7 +78,6 @@ class Main {
   private static void createMenus () {
     final JFileChooser chooser = new JFileChooser();
     chooser.setCurrentDirectory(null);
-    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
     JMenuBar menuBar = new JMenuBar();
 
@@ -99,41 +101,24 @@ class Main {
       item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
 
       item.addActionListener(e -> {
-        JFileChooser sceneChooser = new JFileChooser();
-        sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.open_scene"));
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        chooser.setDialogTitle(RESOURCES.getString("dlg.title.open_scene"));
 
-        if (sceneChooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
-          try (BufferedReader in = new BufferedReader(new FileReader(sceneChooser.getSelectedFile()))) {
+        if (chooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+          File file = chooser.getSelectedFile();
+          try (BufferedReader in = new BufferedReader(new FileReader(file))) {
 
-            scene.reset();
+            scene.read(in);
 
-            String line = in.readLine();
-            while (null != line) {
-              String[] tokens = line.split(":");
-
-              if ("g".equals(tokens[0]) && tokens.length == 3) { // Grid dimensions
-                scene.setGrid(Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
-
-                fldWidth.getDocument().removeDocumentListener(dlGridChange);
-                fldHeight.getDocument().removeDocumentListener(dlGridChange);
-                fldWidth.setValue(scene.grid.width);
-                fldHeight.setValue(scene.grid.height);
-                fldWidth.getDocument().addDocumentListener(dlGridChange);
-                fldHeight.getDocument().addDocumentListener(dlGridChange);
-              }
-
-              if ("s".equals(tokens[0]) && tokens.length == 4) { // Sprite
-                scene.addSprite(tokens[1],
-                                Integer.parseInt(tokens[2]),
-                                Integer.parseInt(tokens[3]));
-              }
-
-              line = in.readLine();
-            }
+            fldWidth.getDocument().removeDocumentListener(dlGridChange);
+            fldHeight.getDocument().removeDocumentListener(dlGridChange);
+            fldWidth.setValue(scene.grid.width);
+            fldHeight.setValue(scene.grid.height);
+            fldWidth.getDocument().addDocumentListener(dlGridChange);
+            fldHeight.getDocument().addDocumentListener(dlGridChange);
 
           } catch (IOException ioe) {
-            ioe.printStackTrace();
+            logger.log(Level.WARNING, "Unable to open scene: " + file.getName(), ioe);
           }
         }
 
@@ -149,21 +134,18 @@ class Main {
       item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
 
       item.addActionListener(e -> {
-        JFileChooser sceneChooser = new JFileChooser();
-        sceneChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        sceneChooser.setDialogTitle(RESOURCES.getString("dlg.title.save"));
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        chooser.setDialogTitle(RESOURCES.getString("dlg.title.save"));
 
-        if (sceneChooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+        if (chooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+          File file = chooser.getSelectedFile();
 
-          try (BufferedWriter out = new BufferedWriter(new FileWriter(sceneChooser.getSelectedFile()))) {
+          try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
 
-            out.write(String.format("g:%d:%d\n", scene.grid.width, scene.grid.height));
-            for (Sprite s : scene.getSprites()) {
-              out.write(String.format("s:%s:%d:%d\n", s.id, s.x, s.y));
-            }
+            scene.save(out);
 
           } catch (IOException ioe) {
-            ioe.printStackTrace();
+            logger.log(Level.WARNING, "Unable to save scene: " + file.getName(), ioe);
           }
         }
       });
@@ -179,6 +161,7 @@ class Main {
       item.setMnemonic(KeyEvent.VK_L);
 
       item.addActionListener(e -> {
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle(RESOURCES.getString("dlg.title.select_library_path"));
 
         if (chooser.showOpenDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
@@ -200,15 +183,17 @@ class Main {
       item.setMnemonic(KeyEvent.VK_E);
 
       item.addActionListener(e -> {
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setDialogTitle(RESOURCES.getString("dlg.title.export"));
 
         if (chooser.showSaveDialog(frmMainWnd) == JFileChooser.APPROVE_OPTION) {
+          File file = chooser.getSelectedFile();
           RenderedImage texture = scene.export();
 
           try {
-            ImageIO.write(texture, "png", chooser.getSelectedFile());
+            ImageIO.write(texture, "png", file);
           } catch (IOException ioe) {
-            ioe.printStackTrace();
+            logger.log(Level.WARNING, "Unable to export image: " + file.getName(), ioe);
           }
         }
       });

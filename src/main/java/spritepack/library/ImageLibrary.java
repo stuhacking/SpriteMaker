@@ -11,8 +11,11 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ImageLibrary {
+  private static final Logger logger = Logger.getLogger("ImageLibrary");
 
   private final ArrayList<ImageFile> sprites = new ArrayList<>();
 
@@ -22,7 +25,7 @@ public class ImageLibrary {
     try {
       Files.walkFileTree(Paths.get(pPath), finder);
     } catch (IOException e) {
-      System.err.println("Error finding image files in: " + pPath);
+      logger.log(Level.WARNING, "Error finding images under: " + pPath, e);
     }
   }
 
@@ -62,7 +65,9 @@ public class ImageLibrary {
     @Override
     public FileVisitResult visitFileFailed(Path file,
                                            IOException exc) {
-      exc.printStackTrace();
+
+      logger.log(Level.WARNING, "File visit failed: " + file, exc);
+
       return FileVisitResult.CONTINUE;
     }
   }

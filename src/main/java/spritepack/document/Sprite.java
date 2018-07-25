@@ -5,12 +5,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 /**
  * Sample Scene sprite.
  */
 public class Sprite {
+  private static final Logger logger = Logger.getLogger("Sprite");
 
   public final String id;
   public final Image image;
@@ -27,8 +30,7 @@ public class Sprite {
     try  {
       readImage = ImageIO.read(new File(pId));
     } catch (IOException e) {
-      System.err.println("Can't open image file: " + pId);
-      e.printStackTrace();
+      logger.log(Level.WARNING, "Can't open image: " + pId, e);
     } finally {
       image = readImage;
     }

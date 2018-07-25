@@ -51,7 +51,11 @@ class SampleCanvas extends JPanel implements Runnable {
     while (running) {
       repaint();
 
-      try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(); }
+      try {
+        Thread.sleep(66); // ~15fps (We don't have any animation)
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
