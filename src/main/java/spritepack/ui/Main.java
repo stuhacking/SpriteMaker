@@ -69,7 +69,8 @@ class Main {
   private static JTextField fldFilter;
 
   // Data models.
-  private static ImageLibrary library = new ImageLibrary("/home/shacking/dev/art/");
+  private static ImageLibrary library =
+      new ImageLibrary(System.getProperty("user.home") + "/dev/art/");
   private static SampleScene scene = new SampleScene();
 
   /**
@@ -316,7 +317,11 @@ class Main {
 
     tblLibrary = new JTable(new LibraryTableModel(library));
     tblLibrary.setRowHeight(48);
+    tblLibrary.getColumnModel().getColumn(0).setMinWidth(16);
+    tblLibrary.getColumnModel().getColumn(0).setMaxWidth(96);
+    tblLibrary.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     tblLibrary.setFillsViewportHeight(false);
+    tblLibrary.doLayout();
 
     trsLibrarySorter =
         new TableRowSorter<>((LibraryTableModel)tblLibrary.getModel());
@@ -345,7 +350,8 @@ class Main {
 
         //If current expression doesn't parse, don't update.
         try {
-          rf = RowFilter.regexFilter(fldFilter.getText(), 2);
+          rf = RowFilter.regexFilter(fldFilter.getText(),
+                                     LibraryTableModel.COLUMN_NAME);
         } catch (java.util.regex.PatternSyntaxException se) {
           return;
         }

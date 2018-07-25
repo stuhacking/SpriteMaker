@@ -4,16 +4,17 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
 import spritepack.document.SampleScene;
 import spritepack.document.Sprite;
 
 /**
- * A Panel displaying an image and various selection details.
- * Created: 29-Nov-2017
+ * Custom painted canvas showing sample scene.
  */
-class SampleCanvas extends JPanel implements Runnable {
+class SampleCanvas extends JComponent implements Runnable {
+
+  private static final int SLEEP_TIME = 1000 / 15; // ~15fps should be plenty.
 
   private static final Color DEFAULT_BACKGROUND  = new Color(50, 50, 65);
   private static final Color DEFAULT_MAIN_GRID   = new Color(110, 110, 110);
@@ -52,13 +53,16 @@ class SampleCanvas extends JPanel implements Runnable {
       repaint();
 
       try {
-        Thread.sleep(66); // ~15fps (We don't have any animation)
+        Thread.sleep(SLEEP_TIME); // ~15fps (We don't have any animation)
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
     }
   }
 
+  /**
+   * Start this component rendering in a background thread.
+   */
   void start () {
     if (!running) {
       running = true;
@@ -66,6 +70,9 @@ class SampleCanvas extends JPanel implements Runnable {
     }
   }
 
+  /**
+   * Stop render thread.
+   */
   void stop () {
     if (running) {
       running = false;

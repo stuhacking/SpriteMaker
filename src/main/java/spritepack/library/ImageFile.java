@@ -9,7 +9,7 @@ import javax.swing.ImageIcon;
  */
 public class ImageFile {
 
-  /** Image filename */
+  /** Image filename and unique ID. */
   public final Path filename;
 
   /** Image preview icon */

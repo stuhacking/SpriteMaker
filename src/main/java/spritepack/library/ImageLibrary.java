@@ -17,8 +17,14 @@ import java.util.logging.Logger;
 public class ImageLibrary {
   private static final Logger logger = Logger.getLogger("ImageLibrary");
 
-  private final ArrayList<ImageFile> sprites = new ArrayList<>();
+  private final ArrayList<ImageFile> sprites = new ArrayList<>(1024);
 
+  /**
+   * Create an ImageLibrary by walking the directory tree starting at `pPath'
+   * and selecting any image files found.
+   *
+   * @param pPath Root directory for library.
+   */
   public ImageLibrary (String pPath)
   {
     ImageFinder finder = new ImageFinder();
@@ -35,6 +41,10 @@ public class ImageLibrary {
     return sprites.get(index);
   }
 
+  /**
+   * File visitor to find files matching "*.png"
+   * TODO [smh] Match a bunch of image extensions. For now I only need png.
+   */
   private class ImageFinder extends SimpleFileVisitor<Path> {
     private final PathMatcher matcher =
         FileSystems.getDefault().getPathMatcher("glob:*.png");
@@ -46,16 +56,12 @@ public class ImageLibrary {
       }
     }
 
-    // Invoke the pattern matching
-    // method on each file.
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
       find(file);
       return FileVisitResult.CONTINUE;
     }
 
-    // Invoke the pattern matching
-    // method on each directory.
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
       find(dir);
@@ -63,10 +69,9 @@ public class ImageLibrary {
     }
 
     @Override
-    public FileVisitResult visitFileFailed(Path file,
-                                           IOException exc) {
+    public FileVisitResult visitFileFailed(Path file, IOException e) {
 
-      logger.log(Level.WARNING, "File visit failed: " + file, exc);
+      logger.log(Level.WARNING, "File visit failed: " + file, e);
 
       return FileVisitResult.CONTINUE;
     }

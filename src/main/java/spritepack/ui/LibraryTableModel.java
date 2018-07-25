@@ -1,5 +1,6 @@
 package spritepack.ui;
 
+import java.nio.file.Path;
 import java.util.ResourceBundle;
 import javax.swing.ImageIcon;
 import javax.swing.table.AbstractTableModel;
@@ -8,43 +9,49 @@ import spritepack.library.ImageFile;
 import spritepack.library.ImageLibrary;
 
 /**
- * JTable data model based on ImageFile Document.
+ * JTable data model based on ImageLibrary data.
  */
 class LibraryTableModel extends AbstractTableModel {
+
+  /** Preview icon column. */
+  static final int COLUMN_ICON = 0;
+
+  /** Filename column (is also the ID.) */
+  static final int COLUMN_NAME = 1;
 
   private static final ResourceBundle RESOURCES =
       ResourceBundle.getBundle("spritepack.ui.labels");
 
-  private final ImageLibrary doc;
+  private final ImageLibrary mLibrary;
 
-  LibraryTableModel (ImageLibrary doc) {
-    this.doc = doc;
+  LibraryTableModel (ImageLibrary pLibrary) {
+    this.mLibrary = pLibrary;
   }
 
   @Override
   public int getRowCount () {
-    if (null == doc)
+    if (null == mLibrary)
       return 0;
 
-    return doc.getSprites().size();
+    return mLibrary.getSprites().size();
   }
 
   @Override
   public int getColumnCount () {
-    return 3; // id, icon, filename
+    return 2;
   }
 
   @Override
   public Object getValueAt (int row, int col) {
-    ImageFile s = doc.getSprite(row);
+    ImageFile image = mLibrary.getSprite(row);
 
     switch (col) {
-      case 1:
-        return s.icon;
-      case 2:
-        return s.filename.getFileName();
+      case COLUMN_ICON:
+        return image.icon;
+      case COLUMN_NAME:
+        return image.filename.getFileName();
       default:
-        return row; // Position in list is ID.
+        return null;
     }
   }
 
@@ -52,19 +59,21 @@ class LibraryTableModel extends AbstractTableModel {
   public String getColumnName (int col) {
 
     switch (col) {
-      case 1:
+      case COLUMN_ICON:
         return RESOURCES.getString("tbl.header.icon");
-      case 2:
+      case COLUMN_NAME:
         return RESOURCES.getString("tbl.header.name");
       default:
-        return RESOURCES.getString("tbl.header.id");
+        return String.valueOf(col); // Label extra columns with column index.
     }
   }
 
   public Class getColumnClass(int col) {
     switch (col) {
-      case 1:
+      case COLUMN_ICON:
         return ImageIcon.class;
+      case COLUMN_NAME:
+        return Path.class;
       default:
         return int.class;
     }
@@ -72,5 +81,5 @@ class LibraryTableModel extends AbstractTableModel {
 
   public boolean isCellEditable(int row, int col) { return false; }
 
-  public void setValueAt(Object value, int row, int col) { }
+  public void setValueAt(Object value, int row, int col) { /* nop */ }
 }
